@@ -14,9 +14,31 @@ const modalTitle = document.getElementById('modalTitle');
 const contactForm = document.getElementById('contactForm');
 const formNote = document.getElementById('formNote');
 
-const projects = Array.isArray(window.AMERFX_PROJECTS)
-    ? window.AMERFX_PROJECTS
-    : [];
+let projects = [];
+
+async function loadProjects() {
+    try {
+        const response = await fetch('projects.json', { cache: 'no-store' });
+
+        if (!response.ok) {
+            throw new Error(`تعذر تحميل المشاريع: ${response.status}`);
+        }
+
+        const data = await response.json();
+        projects = Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error(error);
+        projects = [];
+
+        if (portfolioEmpty) {
+            portfolioEmpty.hidden = false;
+            portfolioEmpty.innerHTML = `
+                <h3>تعذر تحميل معرض الأعمال</h3>
+                <p>تأكد من أن ملف <code>projects.json</code> موجود وصحيح، ثم حدّث الصفحة.</p>
+            `;
+        }
+    }
+}
 
 window.addEventListener('load', () => {
     setTimeout(() => loader.classList.add('is-hidden'), 450);
@@ -222,4 +244,7 @@ contactForm.addEventListener('submit', event => {
 });
 
 document.getElementById('year').textContent = new Date().getFullYear();
-renderProjects();
+
+loadProjects().then(() => {
+    renderProjects();
+});
